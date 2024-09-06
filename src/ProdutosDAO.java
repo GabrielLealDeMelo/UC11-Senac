@@ -26,6 +26,46 @@ public class ProdutosDAO {
     ResultSet resultset;
     ArrayList<ProdutosDTO> listagem = new ArrayList<>();
     
+    public void venderProduto(int produtoId) {
+        String checkStatusSql = "SELECT status FROM produtos WHERE id = ?";
+        String updateSql = "UPDATE produtos SET status = 'Vendido' WHERE id = ?";
+    
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/?user=root", "root", "1234")) {
+            // Primeiro, verifique o status atual do produto
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkStatusSql)) {
+                checkStmt.setInt(1, produtoId);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (rs.next()) {
+                        String status = rs.getString("status");
+
+                        // Verifique se o status já é "Vendido"
+                        if ("Vendido".equalsIgnoreCase(status)) {
+                            JOptionPane.showMessageDialog(null, "Este produto já está vendido.");
+                            return; // Sai do método se o produto já estiver vendido
+                        }
+                    } else {
+                        // Se o produto não foi encontrado, informa o usuário
+                        JOptionPane.showMessageDialog(null, "Produto não encontrado.");
+                        return; // Sai do método se o produto não existir
+                    }
+                }
+            }
+
+        // Se o produto não estiver vendido, procede com a atualização
+        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+            updateStmt.setInt(1, produtoId);
+            int rowsAffected = updateStmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(null, "Produto vendido com sucesso!");
+            }
+        }
+        
+    } catch (SQLException e) {
+        throw new RuntimeException("Erro ao vender o produto: " + e.getMessage(), e);
+    }
+}
+    
     public void cadastrarProduto (ProdutosDTO produto){
         String sql = "INSERT INTO produtos (nome, valor, status) VALUES (?, ?, ?)";
 
